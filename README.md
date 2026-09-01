@@ -1,54 +1,149 @@
-# AeroPredict AI ✈️
+# ✈️ AeroPredict AI
 
-## Problem Statement
-AeroPredict AI is an Intelligent Aircraft Engine Health & Maintenance System. The goal is to accurately predict the Remaining Useful Life (RUL) of aircraft engines using run-to-failure degradation trajectories. This enables predictive maintenance, preventing catastrophic failures while maximizing the operational lifespan of the engine.
+**Intelligent Aircraft Engine Health & Predictive Maintenance System**
 
-## Dataset
-The project is built on the **NASA C-MAPSS (Commercial Modular Aero-Propulsion System Simulation) dataset**.
-It includes four distinct subsets (FD001 to FD004) featuring different operational conditions and fault modes.
+## 🚀 Live Demo
 
-## Architecture
-The system employs a unified, single-tier architecture optimized for serverless deployments like Streamlit Community Cloud:
-- **Frontend/Inference:** Streamlit UI integrated directly with the pre-trained models. (No separate FastAPI backend required for the public app).
-- **AI Maintenance Advisor:** Google Gemini 2.5 Flash LLM, consuming SHAP explainability metrics and predicted RUL to generate human-readable maintenance strategies.
+👉 **[Open AeroPredict AI Live App](https://akash-aeropredict-ai-2.streamlit.app/)**
 
-## Model Performance Metrics
-Both Classical ML and Deep Learning architectures were evaluated on the processed data.
-- **Classical ML (Best: LightGBM)**
-  - MAE: 43.90
-  - RMSE: 59.10
-  - R2: -0.004
-- **Deep Learning (Best: GRU)**
-  - MAE: 36.16
-  - RMSE: 41.85
-  - R2: -0.014
+---
 
-**Selected Inference Model:** The **GRU Deep Learning Model** was selected for production inference due to superior temporal sequence modeling on the multi-sensor dataset.
+## 🎯 What Does It Predict?
 
-## Links & Deployment
-## 🚀 Live Demo 👉 [Open AeroPredict-AI Live App](https://akash-aeropredict-ai-2.streamlit.app/)
-- **GitHub Repository:** [https://github.com/akashupadhayay106-au/AeroPredict-AI](https://github.com/akashupadhayay106-au/AeroPredict-AI)
-- **FastAPI Live URL:** Not Required (Monolithic Architecture)
-- **API Documentation:** N/A
+AeroPredict AI estimates the **Remaining Useful Life (RUL)** of aircraft engines — the number of operating cycles an engine may have remaining before it requires maintenance attention.
 
-## Local Run Instructions
-To run the system locally for development:
+> RUL is a predictive estimate, not a certified aviation maintenance decision.
+
+**Input:** Engine operating conditions + sensor measurements + engine history / scenario data.
+
+**Output:**
+- Predicted Remaining Useful Life (RUL) in cycles
+- Engine Health Status (Healthy / Monitor / Warning / Critical)
+- Risk Level (Low / Medium / High / Critical)
+- SHAP-based explainability (which factors influenced the prediction)
+- AI-powered maintenance recommendations (via Google Gemini)
+
+---
+
+## 📊 Dataset
+
+Built on the **NASA C-MAPSS** (Commercial Modular Aero-Propulsion System Simulation) turbofan engine degradation dataset:
+- Run-to-failure trajectories for ~100 engines
+- 3 operational settings + 21 sensor measurements per cycle
+- Subset: FD001 (single operating condition, single fault mode)
+
+---
+
+## 🧠 Model
+
+| Component | Detail |
+|---|---|
+| Production Inference Model | LightGBM (best ML performer) |
+| Compared Models | Linear Regression, Random Forest, XGBoost, LightGBM, GRU |
+| Feature Engineering | Rolling mean/std (windows 5, 10), constant column removal |
+| Total Features | 101 (3 settings + 14 sensors + 84 rolling features) |
+| Target | RUL capped at 125 cycles |
+
+### Actual Metrics
+
+| Metric | LightGBM (ML) | GRU (DL) |
+|---|---|---|
+| MAE | 43.90 | 36.17 |
+| RMSE | 59.10 | 41.85 |
+| R² | −0.004 | −0.014 |
+
+> The negative R² indicates the model has not outperformed a naïve mean predictor on the test set. This is common in C-MAPSS due to early-cycle sensor noise before degradation manifests. Further hyperparameter tuning is recommended for production aviation use.
+
+---
+
+## 🔍 Explainability
+
+**SHAP** (SHapley Additive exPlanations) provides per-prediction feature importance, showing which sensors and operating conditions contributed most to each individual RUL estimate.
+
+---
+
+## 🤖 AI Maintenance Advisor
+
+A **Google Gemini**-powered conversational assistant provides:
+- Engineering-oriented maintenance recommendations
+- Interactive Q&A about the current engine status
+- Context-aware guidance based on the actual prediction and SHAP factors
+
+The AI Advisor is **optional** — if the API key is missing or the service is unavailable, all core ML predictions continue to work normally.
+
+---
+
+## 🏗️ Architecture
+
+```
+NASA C-MAPSS Data
+      ↓
+Data Preparation & Feature Engineering
+      ↓
+ML Model (LightGBM)
+      ↓
+RUL Prediction
+      ↓
+┌────────────────┬────────────────────┐
+│ SHAP Explain.  │ Gemini AI Advisor  │
+└────────────────┴────────────────────┘
+      ↓
+Streamlit Application (Public)
+```
+
+Single-tier monolithic architecture optimised for Streamlit Community Cloud deployment.
+
+---
+
+## 🏃 Local Setup
+
 ```bash
-# 1. Install dependencies
+# 1. Clone the repository
+git clone https://github.com/akashupadhayay106-au/AeroPredict-AI.git
+cd AeroPredict-AI
+
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 2. Run Streamlit App
+# 3. Create .env file
+echo "GEMINI_API_KEY=your_key_here" > .env
+
+# 4. Run the Streamlit app
 streamlit run app/app.py
 ```
 
-## Deployment Instructions (Streamlit Community Cloud)
-1. Navigate to [share.streamlit.io](https://share.streamlit.io) and log in with your GitHub account.
-2. Click **New app**.
-3. Select `akashupadhayay106-au/AeroPredict-AI` as the repository.
-4. Select `master` as the branch.
-5. Enter `app/app.py` as the Main file path.
-6. Click **Advanced settings** and add your `GEMINI_API_KEY` to the Secrets section.
-7. Click **Deploy**.
+---
 
-## Known Limitations
-- The model exhibits a negative R2 score on the test set, indicating that the baseline variance is high relative to the predictions. This is common in C-MAPSS due to early-cycle sensor noise before degradation begins. Piece-wise RUL capping at 125 cycles was applied to mitigate this, but further hyperparameter tuning (sequence length, learning rate) is recommended for production aviation use.
+## ☁️ Streamlit Cloud Deployment
+
+1. Navigate to [share.streamlit.io](https://share.streamlit.io) and log in with GitHub.
+2. Click **New app**.
+3. Select `akashupadhayay106-au/AeroPredict-AI`, branch `master`, main file `app/app.py`.
+4. Click **Advanced settings** → add `GEMINI_API_KEY = "your_key"` in Secrets.
+5. Click **Deploy**.
+
+---
+
+## 🧪 Testing
+
+```bash
+pytest -q
+```
+
+Tests cover: RUL calculation, feature engineering, schema validation, inference pipeline, health thresholds, and Gemini graceful degradation.
+
+---
+
+## ⚠️ Limitations
+
+- The model uses simulated (C-MAPSS) data and should not be directly applied to real-world maintenance without retraining.
+- Predictions are decision-support estimates, not certified aviation guidance.
+- Health status categories are rule-based heuristics, not model-generated classifications.
+- The Gemini AI Advisor depends on an external API and may experience temporary outages.
+- Simulation mode generates synthetic data that approximates but does not replicate real sensor behaviour.
+
+---
+
+## 📜 License
+
+This project is for educational and demonstration purposes.
