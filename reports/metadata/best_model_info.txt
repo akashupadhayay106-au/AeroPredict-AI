@@ -1,0 +1,5 @@
+Model: GRU
+Type: Deep Learning
+RMSE: 41.8549
+MAE: 36.1684
+R2: -0.0145
