@@ -16,3 +16,4 @@ google-genai
 joblib
 pytest
 jupyter
+plotly
