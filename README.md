@@ -26,8 +26,8 @@ Both Classical ML and Deep Learning architectures were evaluated on the processe
 **Selected Inference Model:** The **GRU Deep Learning Model** was selected for production inference due to superior temporal sequence modeling on the multi-sensor dataset.
 
 ## Links & Deployment
+## 🚀 Live Demo 👉 [Open AeroPredict-AI Live App](https://akash-aeropredict-ai-2.streamlit.app/)
 - **GitHub Repository:** [https://github.com/akashupadhayay106-au/AeroPredict-AI](https://github.com/akashupadhayay106-au/AeroPredict-AI)
-- **Streamlit Live URL:** *(Pending deployment via Streamlit Cloud)*
 - **FastAPI Live URL:** Not Required (Monolithic Architecture)
 - **API Documentation:** N/A
 
