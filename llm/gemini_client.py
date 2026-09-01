@@ -6,6 +6,16 @@ from llm.prompts import MAINTENANCE_ADVISOR_PROMPT
 class GeminiAdvisor:
     def __init__(self):
         self.api_key = GEMINI_API_KEY
+        
+        # Fallback to Streamlit Secrets if running in Streamlit Cloud
+        if not self.api_key:
+            try:
+                import streamlit as st
+                if "GEMINI_API_KEY" in st.secrets:
+                    self.api_key = st.secrets["GEMINI_API_KEY"]
+            except ImportError:
+                pass
+                
         self.client = None
         if self.api_key:
             self.client = genai.Client(api_key=self.api_key)
