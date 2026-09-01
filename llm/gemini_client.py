@@ -45,3 +45,41 @@ class GeminiAdvisor:
             return response.text
         except Exception as e:
             return f"AI Maintenance Advisor unavailable due to error: {str(e)}\n\nModel prediction and SHAP analysis are still available."
+
+    def chat_with_context(self, user_message: str, chat_history: list, risk_info: dict, top_features: list) -> str:
+        if not self.client:
+            return "AI Chatbot unavailable. (API Key missing or invalid)"
+            
+        try:
+            # Format top features nicely for context
+            features_str = "\n".join([f"- {f['name']}: {f['impact']}" for f in top_features]) if top_features else "Not available"
+            
+            # Construct a powerful system prompt context
+            context_prompt = f"""You are the AeroPredict AI Maintenance Assistant.
+You are helping an engineer diagnose an aircraft engine with the following current status:
+Engine ID: {risk_info.get('engine_id', 'Unknown')}
+Current Cycle: {risk_info.get('current_cycle', 'Unknown')}
+Predicted Remaining Useful Life (RUL): {risk_info.get('rul', 'Unknown')} cycles
+Risk Level: {risk_info.get('risk_level', 'Unknown')}
+Health Status: {risk_info.get('health_status', 'Unknown')}
+
+Top Factors influencing this prediction (SHAP values):
+{features_str}
+
+Please answer the user's question directly, clearly, and concisely, using this context if relevant.
+"""
+            # Build the full conversation history for the LLM
+            full_prompt = context_prompt + "\n\nConversation History:\n"
+            for msg in chat_history:
+                role = "User" if msg["role"] == "user" else "Assistant"
+                full_prompt += f"{role}: {msg['content']}\n"
+            full_prompt += f"\nUser: {user_message}\nAssistant:"
+            
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=full_prompt,
+            )
+            
+            return response.text
+        except Exception as e:
+            return f"Chatbot encountered an error: {str(e)}"

@@ -45,10 +45,11 @@ st.markdown("""
 # BACKEND INITIALIZATION
 # ==========================================
 @st.cache_resource
-def load_backend():
-    return EnginePredictor(), GeminiAdvisor()
+def load_predictor():
+    return EnginePredictor()
 
-predictor, advisor = load_backend()
+predictor = load_predictor()
+advisor = GeminiAdvisor() # Do not cache this, so it always checks st.secrets dynamically
 
 # ==========================================
 # HEADER & SYSTEM STATUS
@@ -202,8 +203,8 @@ if 'sim_df' in st.session_state:
             
         with col_res2:
             st.markdown(f"""
-            <div class="{card_class}">
-                <div class="metric-title">ENGINE HEALTH</div>
+            <div class="{card_class}" title="HEALTHY: RUL > 50 | WARNING: 25 < RUL <= 50 | CRITICAL: RUL <= 25">
+                <div class="metric-title">ENGINE HEALTH ℹ️</div>
                 <div class="metric-value">{health_cat}</div>
             </div>
             """, unsafe_allow_html=True)
@@ -217,7 +218,7 @@ if 'sim_df' in st.session_state:
             """, unsafe_allow_html=True)
             
         # Explanations & Advisor
-        tab_shap, tab_ai, tab_trend = st.tabs(["🔍 Why this prediction?", "🤖 AI Maintenance Advisor", "📈 Historical Trend"])
+        tab_shap, tab_ai, tab_chat, tab_trend = st.tabs(["🔍 Why this prediction?", "🤖 AI Maintenance Advisor", "💬 Interactive AI Assistant", "📈 Historical Trend"])
         
         with tab_shap:
             st.markdown("#### Top Factors Affecting RUL")
@@ -241,6 +242,7 @@ if 'sim_df' in st.session_state:
                     fig.update_layout(yaxis={'categoryorder':'total ascending'}, height=400)
                     st.plotly_chart(fig, use_container_width=True)
             else:
+                top_features = []
                 st.info("Explainability not available for this model type.")
                 
         with tab_ai:
@@ -251,6 +253,28 @@ if 'sim_df' in st.session_state:
                     st.info(recommendation)
                 else:
                     st.warning("AI Advisor unavailable. Core ML prediction remains operational.")
+                    
+        with tab_chat:
+            st.markdown("#### Chat with AeroPredict AI")
+            st.write("Ask questions about the current engine status, SHAP explainability, or general maintenance!")
+            
+            if "messages" not in st.session_state:
+                st.session_state.messages = []
+                
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+                    
+            if prompt := st.chat_input("E.g., Why is the risk level high?"):
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                    
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        response = advisor.chat_with_context(prompt, st.session_state.messages[:-1], risk_info, top_features)
+                        st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
                     
         with tab_trend:
             st.markdown("#### Scenario Telemetry Trend")
