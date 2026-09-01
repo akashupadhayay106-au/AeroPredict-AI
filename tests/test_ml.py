@@ -49,3 +49,22 @@ def test_feature_engineering_no_leakage():
     # Check engine 2 rolling mean for cycle 1 -> (100)/1 = 100 
     # If leakage existed, it might have included engine 1's cycle 2 (20+100)/2 = 60
     assert result.loc[2, 'sensor_1_roll_mean_2'] == 100.0
+
+def test_inference_schema_validation():
+    from src.inference import EnginePredictor
+    predictor = EnginePredictor()
+    
+    # Only run if model exists locally
+    if predictor.model is not None:
+        # 1. Missing base columns
+        df_invalid = pd.DataFrame({'sensor_2': [10]})
+        res = predictor.predict(df_invalid)
+        assert "error" in res
+        assert "Missing required base columns" in res["error"]
+        
+        # 2. Missing model columns
+        df_invalid_2 = pd.DataFrame({'unit_number': [1], 'time_cycles': [1], 'sensor_2': [10]})
+        res2 = predictor.predict(df_invalid_2)
+        assert "error" in res2
+        assert "Schema mismatch" in res2["error"]
+        assert "Missing expected features" in res2["details"]

@@ -29,9 +29,24 @@ class EnginePredictor:
         if self.model is None:
             return {"error": "Model not loaded."}
             
+        # 1. Base Validation
+        required_base_columns = ['unit_number', 'time_cycles']
+        missing_base = [col for col in required_base_columns if col not in df.columns]
+        if missing_base:
+            return {"error": f"Missing required base columns: {missing_base}"}
+            
         # Feature Engineering on the fly
         # (Assuming df has unit_number and sensors)
         processed_df = add_rolling_features(df)
+        
+        # 2. Model Schema Validation
+        # Ensure all features expected by the model are present after preprocessing
+        missing_features = [col for col in self.features if col not in processed_df.columns]
+        if missing_features:
+            return {
+                "error": "Schema mismatch during inference.",
+                "details": f"Missing expected features: {missing_features[:5]}... ({len(missing_features)} total missing)"
+            }
         
         # Take the last row (current cycle)
         current_features = processed_df.iloc[-1:][self.features]

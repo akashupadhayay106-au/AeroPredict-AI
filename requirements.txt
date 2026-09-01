@@ -14,6 +14,4 @@ streamlit
 python-dotenv
 google-genai
 joblib
-pytest
-jupyter
 plotly
